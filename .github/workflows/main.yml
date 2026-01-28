@@ -86,8 +86,8 @@ jobs:
           }
           echo "TAILSCALE_IP=$tsIP" >> $env:GITHUB_ENV
 
-          - name: Download Apps to Downloads Folder
-            run: |
+      - name: Download Apps to Downloads Folder
+        run: |
           # Buat folder Downloads jika belum ada
           $dlPath = "$env:USERPROFILE\Downloads"
           New-Item -ItemType Directory -Force -Path $dlPath | Out-Null
