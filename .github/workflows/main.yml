@@ -86,32 +86,7 @@ jobs:
           }
           echo "TAILSCALE_IP=$tsIP" >> $env:GITHUB_ENV
 
-      - name: Download Apps to Downloads Folder
-        run: |
-          # Buat folder Downloads jika belum ada
-          $dlPath = "$env:USERPROFILE\Downloads"
-          New-Item -ItemType Directory -Force -Path $dlPath | Out-Null
-          
-          # --- 1. Brave Browser ---
-          $braveUrl = "https://laptop-updates.brave.com/latest/winx64"
-          $bravePath = "$dlPath\BraveSetup.exe"
-          Invoke-WebRequest -Uri $braveUrl -OutFile $bravePath
-          Write-Host "Brave downloaded to: $bravePath"
-
-          # --- 2. Google Drive ---
-          $gdriveUrl = "https://dl.google.com/drive-file-stream/GoogleDriveFSSetup.exe"
-          $gdrivePath = "$dlPath\GoogleDriveSetup.exe"
-          Invoke-WebRequest -Uri $gdriveUrl -OutFile $gdrivePath
-          Write-Host "Google Drive downloaded to: $gdrivePath"
-
-          # --- 3. HandBrake ---
-          # (HandBrake butuh trik dikit karena linknya berubah sesuai versi)
-          $hbApi = Invoke-RestMethod "https://api.github.com/repos/HandBrake/HandBrake/releases/latest"
-          $hbUrl = ($hbApi.assets | Where-Object { $_.name -match "Win_GUI.exe" }).browser_download_url
-          $hbPath = "$dlPath\HandBrakeSetup.exe"
-          Invoke-WebRequest -Uri $hbUrl -OutFile $hbPath
-          Write-Host "HandBrake downloaded to: $hbPath"
-
+    
       - name: Verify RDP Accessibility
         run: |
           Write-Host "Tailscale IP: $env:TAILSCALE_IP"
