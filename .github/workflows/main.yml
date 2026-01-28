@@ -86,10 +86,9 @@ jobs:
           }
           echo "TAILSCALE_IP=$tsIP" >> $env:GITHUB_ENV
  
-        - name: Install HandBrake (GUI)
+      - name: Install HandBrake (GUI)
         run: choco install handbrake -y --force
 
-      # --- 2. INSTALL BRAVE (DIRECT DOWNLOAD) ---
       - name: Install Brave Browser
         shell: powershell
         run: |
