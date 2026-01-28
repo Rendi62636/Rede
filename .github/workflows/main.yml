@@ -87,33 +87,49 @@ jobs:
           echo "TAILSCALE_IP=$tsIP" >> $env:GITHUB_ENV
 
 
-      - name: Install Brave & HandBrake (GUI)
+      - name: Install HandBrake & Google Drive
         run: |
-          # Install Brave Browser
-          choco install brave -y
-          
-          # Install HandBrake (Paket ini menginstall versi GUI/Desktop)
-          choco install handbrake -y
-          
-          # Refresh environment variables agar path terbaca (opsional tapi disarankan)
-          refreshenv
+          Write-Host "Menginstall HandBrake dan Google Drive..."
+          # Menginstall keduanya sekaligus
+          choco install handbrake googledrive -y --force
 
-      - name: Cek Lokasi File .exe
+      # --- 2. INSTALL VIA DIRECT DOWNLOAD (Brave Browser) ---
+      # Kita download manual agar tidak error checksum
+      - name: Install Brave Browser (Direct)
+        shell: powershell
         run: |
-          Write-Host "Mengecek lokasi instalasi..."
+          Write-Host "Mendownload Brave Browser Installer..."
+          $InstallerPath = "$env:TEMP\BraveSetup.exe"
+          Invoke-WebRequest -Uri "https://laptop-updates.brave.com/latest/winx64" -OutFile $InstallerPath
           
+          Write-Host "Menginstall Brave..."
+          Start-Process -FilePath $InstallerPath -ArgumentList "--silent", "--install" -Wait
+
+      # --- 3. VERIFIKASI SEMUA INSTALASI ---
+      - name: Cek Lokasi File .exe
+        shell: powershell
+        run: |
+          Write-Host "--- STATUS INSTALASI ---"
+          
+          # Cek HandBrake
+          if (Test-Path "C:\Program Files\HandBrake\HandBrake.exe") { 
+             Write-Host "[OK] HandBrake: C:\Program Files\HandBrake\HandBrake.exe" 
+          } else { Write-Host "[GAGAL] HandBrake tidak ditemukan." }
+
           # Cek Brave
           if (Test-Path "C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe") { 
-              Write-Host "Brave ditemukan di: C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe" 
-          } else { 
-              Write-Host "Brave tidak ditemukan di path standar." 
-          }
+             Write-Host "[OK] Brave: C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe" 
+          } else { Write-Host "[GAGAL] Brave tidak ditemukan." }
 
-          # Cek HandBrake GUI
-          if (Test-Path "C:\Program Files\HandBrake\HandBrake.exe") { 
-              Write-Host "HandBrake GUI ditemukan di: C:\Program Files\HandBrake\HandBrake.exe" 
+          # Cek Google Drive
+          # Lokasi Google Drive agak unik, biasanya ada di folder versi build
+          # Kita cari secara umum di folder Google
+          $gdrive = Get-ChildItem -Path "C:\Program Files\Google\Drive File Stream" -Recurse -Filter "GoogleDriveFS.exe" -ErrorAction SilentlyContinue
+          
+          if ($gdrive) { 
+             Write-Host "[OK] Google Drive: $($gdrive.FullName)" 
           } else { 
-              Write-Host "HandBrake tidak ditemukan di path standar." 
+             Write-Host "[GAGAL] Google Drive tidak ditemukan." 
           }
           
       - name: Verify RDP Accessibility
