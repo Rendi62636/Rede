@@ -86,41 +86,52 @@ jobs:
           }
           echo "TAILSCALE_IP=$tsIP" >> $env:GITHUB_ENV
  
-      - name: Install HandBrake (GUI)
-        run: choco install handbrake -y --force
-
-   
-      - name: Install Google Drive
+      - name: Download Installers (Brave, HandBrake, GDrive)
         shell: powershell
         run: |
+          # 1. Tentukan Folder Tujuan (Downloads)
+          $DownloadDir = "$env:USERPROFILE\Downloads"
+          New-Item -ItemType Directory -Force -Path $DownloadDir | Out-Null
+          Write-Host "Menyimpan file di: $DownloadDir"
+
+          # ---------------------------------------------------------
+          # 2. DOWNLOAD BRAVE BROWSER
+          # ---------------------------------------------------------
+          Write-Host "Mendownload Brave Browser..."
+          $BraveUrl = "https://laptop-updates.brave.com/latest/winx64"
+          Invoke-WebRequest -Uri $BraveUrl -OutFile "$DownloadDir\BraveSetup.exe"
+          Write-Host "-> Brave Selesai."
+
+          # ---------------------------------------------------------
+          # 3. DOWNLOAD GOOGLE DRIVE
+          # ---------------------------------------------------------
           Write-Host "Mendownload Google Drive..."
-          $DrivePath = "$env:TEMP\GoogleDriveSetup.exe"
-          # URL resmi installer offline/standalone Google Drive
-          Invoke-WebRequest -Uri "https://dl.google.com/drive-file-stream/GoogleDriveFSSetup.exe" -OutFile $DrivePath
-          
-          Write-Host "Menginstall Google Drive..."
-          # Argument --silent agar tidak muncul pop-up yang bikin error
-          Start-Process -FilePath $DrivePath -ArgumentList "--silent" -Wait
-          Write-Host "Google Drive Selesai."
+          $GDriveUrl = "https://dl.google.com/drive-file-stream/GoogleDriveFSSetup.exe"
+          Invoke-WebRequest -Uri $GDriveUrl -OutFile "$DownloadDir\GoogleDriveSetup.exe"
+          Write-Host "-> Google Drive Selesai."
 
-      # --- 4. VERIFIKASI (CEK HASIL) ---
-      - name: Cek Status Instalasi
+          # ---------------------------------------------------------
+          # 4. DOWNLOAD HANDBRAKE (GUI) - AUTO LATEST VERSION
+          # ---------------------------------------------------------
+          Write-Host "Mencari versi terbaru HandBrake..."
+          # Kita cek API GitHub HandBrake untuk dapat link versi terbaru yang valid
+          $HandBrakeApi = Invoke-RestMethod -Uri "https://api.github.com/repos/HandBrake/HandBrake/releases/latest"
+          # Ambil aset yang berakhiran .exe (bukan CLI, bukan ZIP)
+          $HandBrakeAsset = $HandBrakeApi.assets | Where-Object { $_.name -match "HandBrake-.*-x86_64-Win_GUI.exe" } | Select-Object -First 1
+          
+          if ($HandBrakeAsset) {
+            Write-Host "Mendownload HandBrake: $($HandBrakeAsset.name)..."
+            Invoke-WebRequest -Uri $HandBrakeAsset.browser_download_url -OutFile "$DownloadDir\HandBrakeSetup.exe"
+            Write-Host "-> HandBrake Selesai."
+          } else {
+            Write-Host "Gagal menemukan link download HandBrake."
+          }
+
+      - name: Verifikasi (List File di Folder Download)
         shell: powershell
         run: |
-          Write-Host "--- LAPORAN INSTALASI ---"
-          
-          # Cek HandBrake
-          if (Test-Path "C:\Program Files\HandBrake\HandBrake.exe") { Write-Host "[OK] HandBrake Terinstall" } 
-          else { Write-Host "[GAGAL] HandBrake Hilang" }
-
-          # Cek Brave
-          if (Test-Path "C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe") { Write-Host "[OK] Brave Terinstall" } 
-          else { Write-Host "[GAGAL] Brave Hilang" }
-
-          # Cek Google Drive (Cari file executable utamanya)
-          $gdrive = Get-ChildItem -Path "C:\Program Files\Google\Drive File Stream" -Recurse -Filter "GoogleDriveFS.exe" -ErrorAction SilentlyContinue
-          if ($gdrive) { Write-Host "[OK] Google Drive Terinstall di: $($gdrive.FullName)" } 
-          else { Write-Host "[GAGAL] Google Drive Hilang" }
+          Write-Host "--- ISI FOLDER DOWNLOAD ---"
+          Get-ChildItem -Path "$env:USERPROFILE\Downloads"
           
       - name: Verify RDP Accessibility
         run: |
