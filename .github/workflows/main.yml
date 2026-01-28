@@ -85,54 +85,33 @@ jobs:
               exit 1
           }
           echo "TAILSCALE_IP=$tsIP" >> $env:GITHUB_ENV
- 
-      - name: Download Installers (Brave, HandBrake, GDrive)
-        shell: powershell
+
+          - name: Download Apps to Downloads Folder
         run: |
-          # 1. Tentukan Folder Tujuan (Downloads)
-          $DownloadDir = "$env:USERPROFILE\Downloads"
-          New-Item -ItemType Directory -Force -Path $DownloadDir | Out-Null
-          Write-Host "Menyimpan file di: $DownloadDir"
-
-          # ---------------------------------------------------------
-          # 2. DOWNLOAD BRAVE BROWSER
-          # ---------------------------------------------------------
-          Write-Host "Mendownload Brave Browser..."
-          $BraveUrl = "https://laptop-updates.brave.com/latest/winx64"
-          Invoke-WebRequest -Uri $BraveUrl -OutFile "$DownloadDir\BraveSetup.exe"
-          Write-Host "-> Brave Selesai."
-
-          # ---------------------------------------------------------
-          # 3. DOWNLOAD GOOGLE DRIVE
-          # ---------------------------------------------------------
-          Write-Host "Mendownload Google Drive..."
-          $GDriveUrl = "https://dl.google.com/drive-file-stream/GoogleDriveFSSetup.exe"
-          Invoke-WebRequest -Uri $GDriveUrl -OutFile "$DownloadDir\GoogleDriveSetup.exe"
-          Write-Host "-> Google Drive Selesai."
-
-          # ---------------------------------------------------------
-          # 4. DOWNLOAD HANDBRAKE (GUI) - AUTO LATEST VERSION
-          # ---------------------------------------------------------
-          Write-Host "Mencari versi terbaru HandBrake..."
-          # Kita cek API GitHub HandBrake untuk dapat link versi terbaru yang valid
-          $HandBrakeApi = Invoke-RestMethod -Uri "https://api.github.com/repos/HandBrake/HandBrake/releases/latest"
-          # Ambil aset yang berakhiran .exe (bukan CLI, bukan ZIP)
-          $HandBrakeAsset = $HandBrakeApi.assets | Where-Object { $_.name -match "HandBrake-.*-x86_64-Win_GUI.exe" } | Select-Object -First 1
+          # Buat folder Downloads jika belum ada
+          $dlPath = "$env:USERPROFILE\Downloads"
+          New-Item -ItemType Directory -Force -Path $dlPath | Out-Null
           
-          if ($HandBrakeAsset) {
-            Write-Host "Mendownload HandBrake: $($HandBrakeAsset.name)..."
-            Invoke-WebRequest -Uri $HandBrakeAsset.browser_download_url -OutFile "$DownloadDir\HandBrakeSetup.exe"
-            Write-Host "-> HandBrake Selesai."
-          } else {
-            Write-Host "Gagal menemukan link download HandBrake."
-          }
+          # --- 1. Brave Browser ---
+          $braveUrl = "https://laptop-updates.brave.com/latest/winx64"
+          $bravePath = "$dlPath\BraveSetup.exe"
+          Invoke-WebRequest -Uri $braveUrl -OutFile $bravePath
+          Write-Host "Brave downloaded to: $bravePath"
 
-      - name: Verifikasi (List File di Folder Download)
-        shell: powershell
-        run: |
-          Write-Host "--- ISI FOLDER DOWNLOAD ---"
-          Get-ChildItem -Path "$env:USERPROFILE\Downloads"
-          
+          # --- 2. Google Drive ---
+          $gdriveUrl = "https://dl.google.com/drive-file-stream/GoogleDriveFSSetup.exe"
+          $gdrivePath = "$dlPath\GoogleDriveSetup.exe"
+          Invoke-WebRequest -Uri $gdriveUrl -OutFile $gdrivePath
+          Write-Host "Google Drive downloaded to: $gdrivePath"
+
+          # --- 3. HandBrake ---
+          # (HandBrake butuh trik dikit karena linknya berubah sesuai versi)
+          $hbApi = Invoke-RestMethod "https://api.github.com/repos/HandBrake/HandBrake/releases/latest"
+          $hbUrl = ($hbApi.assets | Where-Object { $_.name -match "Win_GUI.exe" }).browser_download_url
+          $hbPath = "$dlPath\HandBrakeSetup.exe"
+          Invoke-WebRequest -Uri $hbUrl -OutFile $hbPath
+          Write-Host "HandBrake downloaded to: $hbPath"
+
       - name: Verify RDP Accessibility
         run: |
           Write-Host "Tailscale IP: $env:TAILSCALE_IP"
