@@ -89,19 +89,7 @@ jobs:
       - name: Install HandBrake (GUI)
         run: choco install handbrake -y --force
 
-      - name: Install Brave Browser
-        shell: powershell
-        run: |
-          Write-Host "Mendownload Brave..."
-          $BravePath = "$env:TEMP\BraveSetup.exe"
-          Invoke-WebRequest -Uri "https://laptop-updates.brave.com/latest/winx64" -OutFile $BravePath
-          
-          Write-Host "Menginstall Brave..."
-          Start-Process -FilePath $BravePath -ArgumentList "--silent", "--install" -Wait
-          Write-Host "Brave Selesai."
-
-      # --- 3. INSTALL GOOGLE DRIVE (DIRECT DOWNLOAD) ---
-      # Kita download langsung dari server Google untuk menghindari error Choco
+   
       - name: Install Google Drive
         shell: powershell
         run: |
