@@ -85,7 +85,37 @@ jobs:
               exit 1
           }
           echo "TAILSCALE_IP=$tsIP" >> $env:GITHUB_ENV
-      
+
+
+      - name: Install Brave & HandBrake (GUI)
+        run: |
+          # Install Brave Browser
+          choco install brave -y
+          
+          # Install HandBrake (Paket ini menginstall versi GUI/Desktop)
+          choco install handbrake -y
+          
+          # Refresh environment variables agar path terbaca (opsional tapi disarankan)
+          refreshenv
+
+      - name: Cek Lokasi File .exe
+        run: |
+          Write-Host "Mengecek lokasi instalasi..."
+          
+          # Cek Brave
+          if (Test-Path "C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe") { 
+              Write-Host "Brave ditemukan di: C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe" 
+          } else { 
+              Write-Host "Brave tidak ditemukan di path standar." 
+          }
+
+          # Cek HandBrake GUI
+          if (Test-Path "C:\Program Files\HandBrake\HandBrake.exe") { 
+              Write-Host "HandBrake GUI ditemukan di: C:\Program Files\HandBrake\HandBrake.exe" 
+          } else { 
+              Write-Host "HandBrake tidak ditemukan di path standar." 
+          }
+          
       - name: Verify RDP Accessibility
         run: |
           Write-Host "Tailscale IP: $env:TAILSCALE_IP"
